@@ -1,0 +1,13 @@
+# Istio CNI node agent 1.30.1
+# Chains after Calico. cniBinDir/cniConfDir are the kubeadm+containerd defaults
+# used on Ubuntu; adjust only if the cluster was bootstrapped differently.
+cni:
+  cniBinDir: /opt/cni/bin
+  cniConfDir: /etc/cni/net.d
+  chained: true
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits:   { memory: 128Mi }
+
+global:
+  logAsJson: false

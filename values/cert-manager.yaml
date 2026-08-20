@@ -1,0 +1,28 @@
+# cert-manager v1.20.2 - must match Kubeflow 26.03.1's common/cert-manager.
+# Used by Kubeflow components for admission-webhook certificates.
+crds:
+  enabled: true
+  keep: true
+
+replicaCount: 1
+
+resources:
+  requests: { cpu: 10m, memory: 64Mi }
+  limits:   { memory: 256Mi }
+
+webhook:
+  replicaCount: 1
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits:   { memory: 128Mi }
+
+cainjector:
+  replicaCount: 1
+  resources:
+    requests: { cpu: 10m, memory: 96Mi }
+    limits:   { memory: 384Mi }
+
+# Lab cluster: spread across both nodes but never block scheduling.
+global:
+  leaderElection:
+    namespace: cert-manager

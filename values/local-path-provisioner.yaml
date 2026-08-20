@@ -1,0 +1,19 @@
+# local-path-provisioner - supplies the default StorageClass.
+# The cluster shipped with NO StorageClass; Kubeflow needs ~45GB of RWO PVCs
+# (Pipelines 35GB + Katib 10GB), so this is a hard prerequisite.
+storageClass:
+  create: true
+  defaultClass: true            # <- makes PVCs without a class name bind here
+  name: local-path
+  reclaimPolicy: Delete
+  volumeBindingMode: WaitForFirstConsumer
+
+# Where volume data actually lives on each node.
+nodePathMap:
+  - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+    paths:
+      - /opt/local-path-provisioner
+
+resources:
+  requests: { cpu: 10m, memory: 32Mi }
+  limits:   { memory: 128Mi }

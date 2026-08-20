@@ -1,0 +1,34 @@
+# KServe v0.18.0 - version-matched to Kubeflow 26.03.1 (applications/kserve).
+#
+# Installed into the `kubeflow` namespace to match where Kubeflow's own overlay
+# puts it. Because the Helm chart templates every reference off .Release.Namespace,
+# the cert-manager `inject-ca-from` annotations come out self-consistent and we
+# avoid the annotation-rewriting patch Kubeflow's kustomize overlay needs.
+kserve:
+  controller:
+    # RawDeployment = plain Deployments + HPA, no Knative required.
+    # Knative would add ~1450m CPU / 1038Mi RAM, which this 14.4Gi cluster
+    # cannot spare. Trade-off: no scale-to-zero for InferenceServices.
+    deploymentMode: RawDeployment
+
+    gateway:
+      domain: example.com
+      urlScheme: http
+      # Point at the Helm-installed Istio gateway instead of Knative's.
+      ingressGateway:
+        enableGatewayApi: false
+        createGateway: false
+        className: istio
+        gateway: istio-system/istio-ingressgateway
+      localGateway:
+        gateway: istio-system/istio-ingressgateway
+        gatewayService: istio-ingressgateway.istio-system.svc.cluster.local
+
+    resources:
+      requests: { cpu: 100m, memory: 300Mi }
+      limits:   { memory: 512Mi }
+
+    rbacProxy:
+      resources:
+        requests: { cpu: 50m, memory: 128Mi }
+        limits:   { memory: 256Mi }

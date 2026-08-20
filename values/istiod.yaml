@@ -1,0 +1,85 @@
+# istiod 1.30.1 - version-matched to Kubeflow 26.03.1 (common/istio).
+#
+# IMPORTANT: because Istio is installed via Helm here instead of Kubeflow's
+# kustomize overlay, the mesh config below must reproduce what
+# common/oauth2-proxy/components/istio-external-auth-patches would have
+# applied. The `oauth2-proxy` extensionProvider in particular is REQUIRED -
+# Kubeflow's AuthorizationPolicies use `action: CUSTOM` referencing it, and
+# without it every authenticated route breaks.
+# REQUIRED. Tells the sidecar injector that the Istio CNI plugin is handling
+# traffic redirection, so it must NOT inject the privileged `istio-init`
+# container. Kubeflow labels its namespaces with PodSecurity `restricted`,
+# which rejects istio-init outright (NET_ADMIN/NET_RAW, runAsUser=0) - without
+# this flag every Deployment in the kubeflow namespace fails with
+# "violates PodSecurity restricted:latest".
+istio_cni:
+  enabled: true
+
+pilot:
+  # The sidecar injection template gates the init container on
+  # `.Values.pilot.cni.enabled` specifically (istio_cni.enabled alone is NOT
+  # enough - it populates a different ConfigMap). With this true the injector
+  # emits the unprivileged `istio-validation` container instead of `istio-init`.
+  cni:
+    enabled: true
+    provider: default
+
+  replicaCount: 1
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits:   { memory: 1Gi }
+  autoscaleEnabled: false
+  env:
+    # Istio refreshes JWT public keys for RequestAuthentication every 20m by
+    # default. On a from-scratch install istiod comes up before dex, caches a
+    # placeholder JWKS, and logins fail until the refresh. 1m makes recovery fast.
+    PILOT_JWT_PUB_KEY_REFRESH_INTERVAL: "1m"
+
+global:
+  # Kubeflow 26.03.1 installs Istio with the CNI plugin, which removes the need
+  # for privileged istio-init containers and plays well with Pod Security
+  # Standards. Calico is compatible (the upstream caveat applies to Cilium).
+  proxy:
+    # REQUIRED for the same PodSecurity `restricted` reason as pilot.cni above:
+    # injected istio-proxy / istio-validation containers must declare a seccomp
+    # profile or the kubeflow namespace rejects every pod with
+    # "seccompProfile ... must set securityContext.seccompProfile.type".
+    seccompProfile:
+      type: RuntimeDefault
+    resources:
+      requests: { cpu: 10m, memory: 64Mi }
+      limits:   { memory: 256Mi }
+
+meshConfig:
+  accessLogFile: /dev/stdout
+  enablePrometheusMerge: true
+  rootNamespace: istio-system
+  trustDomain: cluster.local
+  tcpKeepalive:
+    interval: 5s
+    probes: 3
+    time: 10s
+  defaultConfig:
+    discoveryAddress: istiod.istio-system.svc:15012
+    proxyMetadata: {}
+    tracing: {}
+    # Prevents app containers racing ahead of the sidecar on startup, which
+    # otherwise shows up as flaky init failures in notebooks/pipelines.
+    holdApplicationUntilProxyStarts: true
+  extensionProviders:
+    - name: oauth2-proxy
+      envoyExtAuthzHttp:
+        service: oauth2-proxy.oauth2-proxy.svc.cluster.local
+        port: 80
+        headersToDownstreamOnDeny:
+          - content-type
+          - set-cookie
+        headersToUpstreamOnAllow:
+          - authorization
+          - path
+          - x-auth-request-email
+          - x-auth-request-groups
+          - x-auth-request-user
+        includeRequestHeadersInCheck:
+          - authorization
+          - cookie

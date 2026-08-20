@@ -1,0 +1,6 @@
+# Cloned upstream manifests, downloaded charts, rendered YAML, phase logs.
+# Everything here is reproducible via `make core`.
+.cache/
+
+# kubeconfig backups written by 00-prereqs.sh
+*.bak.*

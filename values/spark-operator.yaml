@@ -1,0 +1,22 @@
+# Spark Operator 2.5.0 - matches Kubeflow 26.03.1 (applications/spark).
+controller:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits:   { memory: 256Mi }
+
+webhook:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 64Mi }
+    limits:   { memory: 256Mi }
+
+spark:
+  # Namespaces the operator watches. Empty list = all namespaces, which is what
+  # Kubeflow wants so user profile namespaces can submit SparkApplications.
+  jobNamespaces:
+    - ""
+
+prometheus:
+  metrics:
+    enable: false

@@ -1,0 +1,7 @@
+# Kubeflow Trainer 2.2.0 (Training Operator v2) - matches Kubeflow 26.03.1.
+# Deployed into the `kubeflow` namespace, same as the upstream overlay.
+controller:
+  replicas: 1
+  resources:
+    requests: { cpu: 10m, memory: 128Mi }
+    limits:   { memory: 512Mi }

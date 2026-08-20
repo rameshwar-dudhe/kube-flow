@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(kubectl config *)",
+      "Bash(kubectl cluster-info *)",
+      "Bash(kubectl get *)",
+      "Read(//root/**)",
+      "Bash(ping -c 2 -W 2 192.168.56.134)",
+      "Bash(timeout 5 bash -c \"cat < /dev/null > /dev/tcp/192.168.56.134/6443\")",
+      "Bash(timeout 5 bash -c \"cat < /dev/null > /dev/tcp/192.168.56.134/22\")",
+      "Bash(ip -4 addr show)",
+      "Bash(timeout 6 curl -sI https://get.helm.sh)",
+      "Bash(make -n uninstall ARGS=\"--yes --revert-nodes\")",
+      "Bash(make help *)",
+      "Bash(make uninstall *)",
+      "Bash(make status *)"
+    ]
+  }
+}
